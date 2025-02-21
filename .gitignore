@@ -1,0 +1,31 @@
+# Python
+*.pyc
+*.pyo
+__pycache__/
+
+# Django
+*.log
+*.sqlite3
+db.sqlite3
+
+# Virtual environment
+splitwise_app_env/
+
+#env file
+.env
+
+# Migrations
+*/migrations/*
+
+# IDEs and Editors
+.vscode/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Others
+*.pdb
+*.pyc
+*.pyo
+*.~*

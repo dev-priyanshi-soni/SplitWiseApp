@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+ <html>
+ <head>
+    <title id="title">Add Expense</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+     <style>
+         body {
+             font-family: Arial, sans-serif;
+             margin: 0;
+             padding: 20px;
+             background: #f5f5f5;
+         }
+ 
+         .container {
+             max-width: 800px;
+             margin: 0 auto;
+             background: white;
+             padding: 30px;
+             border-radius: 10px;
+             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+         }
+ 
+         .step {
+             display: none;
+         }
+ 
+         .step.active {
+             display: block;
+         }
+ 
+         {% comment %} .form-group {
+             margin-bottom: 20px;
+         } {% endcomment %}
+ 
+         label {
+             display: block;
+             margin-bottom: 8px;
+             font-weight: bold;
+         }
+ 
+         input, select {
+             width: 100%;
+             padding: 10px;
+             border: 1px solid #ddd;
+             border-radius: 5px;
+             font-size: 16px;
+         }
+ 
+         button {
+             background: #008CBA;
+             color: white;
+             border: none;
+             padding: 12px 20px;
+             border-radius: 5px;
+             cursor: pointer;
+             font-size: 16px;
+             margin-right: 10px;
+         }
+ 
+         button:hover {
+             background: #006d94;
+         }
+ 
+         .back-btn {
+             background: #6c757d;
+         }
+ 
+         .people-list {
+             margin-top: 20px;
+         }
+ 
+         .person-tag {
+             display: inline-block;
+             background: #e9ecef;
+             padding: 8px 12px;
+             border-radius: 20px;
+             margin: 5px;
+         }
+ 
+         .person-tag i {
+             margin-left: 8px;
+             cursor: pointer;
+             color: #dc3545;
+         }
+ 
+         .expense-details {
+             margin-top: 20px;
+             padding: 15px;
+             background: #f8f9fa;
+             border-radius: 5px;
+         }
+ 
+         .step-indicator {
+             margin-bottom: 30px;
+             text-align: center;
+         }
+ 
+         .step-number {
+             display: inline-block;
+             width: 30px;
+             height: 30px;
+             border-radius: 50%;
+             background: #ddd;
+             color: white;
+             text-align: center;
+             line-height: 30px;
+             margin: 0 10px;
+             cursor:pointer;
+         }
+ 
+         .step-number.active {
+             background: #008CBA;
+         }
+ 
+         .slide-panel {
+             position: fixed;
+             bottom: -100%;
+             left: 0;
+             width: 100%;
+             height: 70vh;
+             overflow:auto;
+             background: white;
+             transition: bottom 0.3s ease-in-out;
+             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+             z-index: 1000;
+             padding: 20px;
+             border-radius: 20px 20px 0 0;
+         }
+ 
+         .slide-panel.active {
+             bottom: 0;
+         }
+ 
+         .slide-panel-header {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             margin-bottom: 20px;
+         }
+ 
+         .close-panel {
+             background: none;
+             border: none;
+             font-size: 24px;
+             cursor: pointer;
+             color: #666;
+         }
+ 
+         .overlay {
+             position: fixed;
+             top: 0;
+             left: 0;
+             width: 100%;
+             height: 100%;
+             background: rgba(0,0,0,0.5);
+             display: none;
+             z-index: 999;
+         }
+ 
+         .overlay.active {
+             display: block;
+         }
+ 
+         .tab-container {
+             margin-top: 20px;
+         }
+ 
+         .tab-buttons {
+             display: flex;
+             margin-bottom: 20px;
+         }
+ 
+         .tab-btn {
+             flex: 1;
+             padding: 10px;
+             text-align: center;
+             background: #918e95;
+             cursor: pointer;
+             border: none;
+         }
+ 
+         .tab-btn.active {
+             background: #008CBA;
+             color: white;
+         }
+ 
+         .tab-content {
+             display: none;
+         }
+ 
+         .tab-content.active {
+             display: block;
+         }
+ 
+         .bill-summary {
+             background: #f8f9fa;
+             padding: 20px;
+             border-radius: 5px;
+             margin-bottom: 20px;
+         }
+ 
+         .participants-list {
+             margin: 20px 0;
+             padding: 15px;
+             background: #f8f9fa;
+             border-radius: 5px;
+         }
+ 
+         /* New styles for cost panels */
+         .cost-panel {
+             position: fixed;
+             bottom: -100%;
+             left: 0;
+             width: 100%;
+             height: 70vh;
+             background: white;
+             transition: bottom 0.3s ease-in-out;
+             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+             z-index: 1000;
+             padding: 20px;
+             border-radius: 20px 20px 0 0;
+         }
+ 
+         .cost-panel.active {
+             bottom: 0;
+         }
+ 
+         .checkbox-list {
+             margin: 10px 0;
+             display:inline-grid;
+         }
+ 
+         .checkbox-list label {
+             display: flex;
+             align-items: center;
+             margin: 5px 0;
+         }
+ 
+         .checkbox-list input[type="checkbox"], .checkbox-list input[type="radio"] {
+             width: auto;
+             margin-right: 10px;
+         }
+ 
+         .cost-summary {
+             background: #f8f9fa;
+             padding: 15px;
+             border-radius: 5px;
+             margin: 10px 0;
+         }
+ 
+         .bill-details {
+             background: white;
+             padding: 20px;
+             border-radius: 5px;
+             margin-top: 20px;
+         }
+ 
+         .bill-details table {
+             width: 100%;
+             border-collapse: collapse;
+         }
+ 
+         .bill-details th, .bill-details td {
+             padding: 10px;
+             text-align: left;
+             border-bottom: 1px solid #ddd;
+         }
+     </style>
+ </head>
+ 
+ <body>
+     <div id="loader" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999;">
+         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+             <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+             <p style="margin-top: 10px;">Processing...</p>
+         </div>
+     </div>
+
+     <style>
+         @keyframes spin {
+             0% { transform: rotate(0deg); }
+             100% { transform: rotate(360deg); }
+         }
+     </style>
+     <div class="overlay" id="overlay"></div>
+     
+     <!-- Add People Panel -->
+     <div class="slide-panel" id="addPeoplePanel">
+         <div class="slide-panel-header">
+             <h2>Add People</h2>
+             <button class="close-panel" onclick="togglePeopleInput()">&times;</button>
+         </div>
+         <div class="form-group">
+             <label>Add Person</label>
+             <input type="text" id="personName" placeholder="Enter name or email" onkeypress="if(event.key === 'Enter') addPerson()">
+             <button onclick="addPerson()" style="margin-top: 10px;">Add</button>
+         </div>
+         <div class="people-list" id="peopleList"></div>
+         <div style="margin-top: 20px;">
+             <button class="back-btn" onclick="togglePeopleInput()">Back</button>
+             <button onclick="continueToCosts()">Confirm</button>
+         </div>
+     </div>
+ 
+     <!-- Add Costs Panel -->
+     <div class="slide-panel" id="addCostsPanel" data-is-edit="false" data-cost-id="">
+         <div class="slide-panel-header">
+             <h2>Bill Details</h2>
+             <button class="close-panel" onclick="toggleCostsPanel()">&times;</button>
+         </div>
+         <div class="tab-container">
+             <div class="tab-buttons">
+                 <button class="tab-btn active" onclick="switchTab('perPerson')">Per Person</button>
+                 <button class="tab-btn" onclick="switchTab('perGroup')">Per Group</button>
+             </div>
+             
+             <div id="perPersonTab" class="tab-content active">
+                 <div class="form-group">
+                     <label>Amount Per Person</label>
+                     <input type="number" id="perPersonAmount" placeholder="Enter amount">
+                 </div>
+                 <div class="form-group">
+                     <label>Cost Description</label>
+                     <input type="text" id="perPersonDesc" placeholder="Enter description">
+                 </div>
+                 <div class="form-group">
+                     <label>Who Should Pay?</label>
+                     <div id="perPersonPayers" onclick="showPayerSelection()">
+                         <span>Select Payers</span>
+                     </div>
+                 </div>
+                 <div class="form-group">
+                     <label>Has this been paid?</label>
+                     <select id="perPersonPaidStatus" onchange="showPaidBySelection()">
+                         <option value="no">No</option>
+                         <option value="yes">Yes</option>
+                     </select>
+                 </div>
+                 <div class="form-group">
+                     <label>Paid By</label>
+                     <span id="payerName"></span>
+                 </div>
+             </div>
+             
+             <div id="perGroupTab" class="tab-content">
+                 <div class="form-group">
+                     <label>Group Amount</label>
+                     <input type="number" id="perGroupAmount" placeholder="Enter amount">
+                 </div>
+                 <div class="form-group">
+                     <label>Cost Description</label>
+                     <input type="text" id="perGroupDesc" placeholder="Enter description">
+                 </div>
+                 <div class="form-group">
+                     <label>Who Should Pay?</label>
+                     <select id="perGroupPayers" onclick="showPayerSelection()">
+                         <option value="">Select Payers</option>
+                     </select>
+                 </div>
+                 <div class="form-group">
+                     <label>Has this been paid?</label>
+                     <select id="perGroupPaidStatus" onchange="showPaidBySelection()">
+                         <option value="no">No</option>
+                         <option value="yes">Yes</option>
+                     </select>
+                 </div>
+             </div>
+         </div>
+         <div style="margin-top: 20px;">
+             <button class="back-btn" onclick="toggleCostsPanel()">Back</button>
+             <button onclick="saveCosts()">Save</button>
+         </div>
+     </div>
+ 
+     <!-- Payer Selection Panel -->
+     <div class="slide-panel" id="payerSelectionPanel">
+         <div class="slide-panel-header">
+             <h2>Select Payers</h2>
+             <button class="close-panel" onclick="togglePayerSelection()">&times;</button>
+         </div>
+         <div class="checkbox-list" id="payersList">
+             <label>
+                 <input type="checkbox" id="selectAllPayers"> Everyone
+             </label>
+         </div>
+         <div style="margin-top: 20px;">
+             <button class="back-btn" onclick="togglePayerSelection()">Back</button>
+             <button onclick="confirmPayers()">Confirm</button>
+         </div>
+     </div>
+ 
+     <!-- Paid By Selection Panel -->
+     <div class="slide-panel" id="paidByPanel">
+         <div class="slide-panel-header">
+             <h2>Who Paid?</h2>
+             <button class="close-panel" onclick="togglePaidBySelection()">&times;</button>
+         </div>
+         <div class="checkbox-list" id="paidByList"></div>
+         <div style="margin-top: 20px;">
+             <button class="back-btn" onclick="togglePaidBySelection()">Back</button>
+             <button onclick="confirmPaidBy()">Confirm</button>
+         </div>
+     </div>
+ 
+     <!-- Bill View Panel -->
+     <div class="slide-panel" id="billViewPanel">
+         <div class="slide-panel-header">
+             <h2>Bill Details</h2>
+             <button class="close-panel" onclick="toggleBillView()">&times;</button>
+         </div>
+         <div class="bill-details" id="billDetails">
+             <!-- Bill details will be populated here -->
+         </div>
+         <div style="margin-top: 20px;">
+             <button class="back-btn" onclick="toggleBillView()">Back</button>
+         </div>
+     </div>
+     
+     <div class="container">
+        <button style="display:none;" id="viewDetailsPage">Back</button>
+         <div class="step-indicator">
+             <span class="step-number" onclick="showStep1()" id="step1Block">1</span>
+             <span class="step-number" onclick="showStep2()" id="step2Block">2</span>
+         </div>
+ 
+         <!-- Step 1 -->
+         <div class="step active" id="step1">
+             <h2>Basic Expense Details</h2>
+             <div class="form-group">
+                 <label>Expense Description</label>
+                 <input type="text" id="expenseDescription" placeholder="Enter expense description">
+             </div>
+             <div class="form-group">
+                 <label>Category</label>
+                 <select id="expenseCategory">
+                     <option value="">Select Category</option>
+                     <option value="food">Food</option>
+                     <option value="transport">Transport</option>
+                     <option value="utilities">Utilities</option>
+                     <option value="entertainment">Entertainment</option>
+                     <option value="others">Others</option>
+                 </select>
+             </div>
+             <button onclick="nextStep()">Continue</button>
+         </div>
+ 
+         <!-- Step 2 -->
+         <div class="step" id="step2">
+             <h2>People & Costs</h2>
+             <div class="expense-details" id="expenseSummary"></div>
+             
+             <div class="participants-list" id="participantsList">
+                 <h3>Participants</h3>
+                 <div id="participantsDisplay"></div>
+             </div>
+             
+             <div class="cost-summary" id="costSummary">
+                 <h3>Added Costs</h3>
+                 <div id="costsList"></div>
+             </div>
+             
+             <div id="peopleSection">
+                 <button onclick="togglePeopleInput()">Add People</button>
+                 <button onclick="checkAndShowCosts()">Add Costs</button>
+                 <button onclick="viewBill()">View Bill</button>
+                 <button class="back-btn" onclick="showStep1()">Back</button>
+             </div>
+         </div>
+     </div>
+     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+     <script>
+         let people = [];
+         let currentTab = 'perPerson';
+         let costs = [];
+         let selectedPayers = [];
+         let paidByPerson = null;
+         let expenseId = null;
+         let participantsData = null;
+         let isEdit = false;
+
+         $(document).ready(function() {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "5000",
+                "showMethod": "fadeIn",   // ✅ Make sure it's a valid function
+                "hideMethod": "fadeOut"
+              };
+
+            //when its edit mode 
+             const context = '{{ context|safe }}' ? JSON.parse('{{ context|safe }}') : null;
+             if (context) {
+                 costs = context.costs;
+                 people = context.people;
+                 expenseId = context.expense.id;
+                 participantsData = context.participantsData;
+                 document.getElementById('expenseDescription').value=context.expense_description;
+                 document.getElementById('expenseCategory').value=context.expense_category;
+                 document.getElementById('expenseDescription').disabled=true;
+                 document.getElementById('expenseCategory').disabled=true;
+                 isEdit = true;
+                 showStep2();
+                 updateCostsList();
+                 updatePeopleList();
+                 updateParticipantsList();
+                 $("#title").text('Edit Expense');
+                 document.getElementById("viewDetailsPage").style.display='block';
+                 document.getElementById("viewDetailsPage").onclick=function(){
+                    window.location.href= `/get-expense-details/${expenseId}/`;
+                 }
+                 document.getElementById('expenseSummary').innerHTML = `
+                 <strong>Expense:</strong> ${context.expense_description}<br>
+                 <strong>Category:</strong> ${context.expense_category}
+             `;
+             }
+             else{
+                showStep1();
+             }
+         });
+
+         function showStep1() {
+            
+            document.getElementById("step1").style.display = "block";
+            document.getElementById("step1Block").classList.add('active');
+            document.getElementById('step2Block').classList.remove('active');
+            document.getElementById("step2").style.display = "none";
+            document.querySelectorAll('#expenseDescription, #expenseCategory').forEach(el => el.disabled = !!el.value);
+        }
+
+        function showStep2() {
+         
+            document.getElementById("step2").style.display = "block";
+            document.getElementById("step1").style.display = "none";
+            document.getElementById("step2Block").classList.add('active');
+            document.getElementById('step1Block').classList.remove('active');
+            document.querySelectorAll('#expenseDescription, #expenseCategory').forEach(el => el.disabled = !!el.value);
+        }
+
+         async function addExpenseAPI(description, category) {
+             try {
+                 const response = await fetch('/add_expense/', {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json',
+                         'X-CSRFToken': '{{csrf_token}}'
+                     },
+                     body: JSON.stringify({
+                         description: description,
+                         category: category
+                     })
+                 });
+                 const data = await response.json();
+                 if (!data.Status) {
+                     throw new Error(data.Error || 'Failed to add expense');
+                 }
+                 return data.Data.id;
+             } catch (error) {
+                 throw error;
+             }
+         }
+
+         async function addParticipantsAPI(expenseId, participants) {
+             try {
+                 const response = await fetch('/add_participants/', {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json',
+                         'X-CSRFToken': '{{csrf_token}}'
+                     },
+                     body: JSON.stringify({
+                         expense_id: expenseId,
+                         participants: participants
+                     })
+                 });
+                 const data = await response.json();
+                 if (!data.Status) {
+                     throw new Error(data.Error || 'Failed to add participants');
+                 }
+                 return data.Data;
+             } catch (error) {
+                 throw error;
+             }
+         }
+
+         async function deleteParticipantAPI(expenseId, participantId) {
+             try {
+                 const response = await fetch('/delete_participant/', {
+                     method: 'DELETE', 
+                     headers: {
+                         'Content-Type': 'application/json',
+                         'X-CSRFToken': '{{csrf_token}}'
+                     },
+                     body: JSON.stringify({
+                         expense_id: expenseId,
+                         participant_id: participantId
+                     })
+                 });
+                 const data = await response.json();
+                 if (!data.Status) {
+                     throw new Error(data.Error || 'Failed to delete participant');
+                 }
+                 return data.Data;
+             } catch (error) {
+                 throw error;
+             }
+         }
+
+         async function addSubExpenseAPI(expenseId, cost) {
+             try {
+                 const response = await fetch('/add_sub_expense/', {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json',
+                         'X-CSRFToken': '{{csrf_token}}'
+                     },
+                     body: JSON.stringify({
+                         expense_id: expenseId,
+                         description: cost.description,
+                         amount: cost.amount,
+                         split_type: cost.type === 'perPerson' ? 'P' : 'G',
+                         users_to_pay: cost.payers,
+                         paid_by: cost.paidBy
+                     })
+                 });
+                 const data = await response.json();
+                 if (!data.Status) {
+                     throw new Error(data.Error || 'Failed to add sub expense');
+                 }
+                 return data.Data;
+             } catch (error) {
+                 throw error;
+             }
+         }
+
+         async function editSubExpenseAPI(expenseId, costId, cost) {
+             try {
+                 const response = await fetch('/update-sub-expense/', {
+                     method: 'PUT',
+                     headers: {
+                         'Content-Type': 'application/json',
+                         'X-CSRFToken': '{{csrf_token}}'
+                     },
+                     body: JSON.stringify({
+                         expense_id: expenseId,
+                         sub_expense_id: costId,
+                         description: cost.description,
+                         amount: cost.amount,
+                         split_type: cost.type === 'perPerson' ? 'P' : 'G',
+                         users_to_pay: cost.payers,
+                         paid_by: cost.paidBy
+                     })
+                 });
+                 const data = await response.json();
+                 if (!data.Status) {
+                     throw new Error(data.Error || 'Failed to edit sub expense');
+                 }
+                 return data.Data;
+             } catch (error) {
+                 throw error;
+             }
+         }
+
+         async function deleteSubExpenseAPI(expenseId, costId) {
+             try {
+                 const response = await fetch('/delete_sub_expense/', {
+                     method: 'DELETE',
+                     headers: {
+                         'Content-Type': 'application/json',
+                         'X-CSRFToken': '{{csrf_token}}'
+                     },
+                     body: JSON.stringify({
+                         expense_id: expenseId,
+                         sub_expense_id: costId
+                     })
+                 });
+                 const data = await response.json();
+                 if (!data.Status) {
+                     throw new Error(data.Error || 'Failed to delete sub expense');
+                 }
+                 return data.Data;
+             } catch (error) {
+                 throw error;
+             }
+         }
+
+         async function saveCosts() {
+             const isForEdit = document.getElementById('addCostsPanel').getAttribute('data-is-edit') === 'true';
+             const costId = document.getElementById('addCostsPanel').getAttribute('data-cost-id');
+
+             // If in edit mode, only allow editing the current tab
+             if (isForEdit) {
+                 const existingCost = costs.find(c => c.id === costId);
+                 if (existingCost && existingCost.type !== currentTab) {
+                    toastr.error("You cannot change the split type while editing!", "Error");
+                    return;
+                 }
+             }
+
+             const amount = currentTab === 'perPerson' 
+                 ? document.getElementById('perPersonAmount').value 
+                 : document.getElementById('perGroupAmount').value;
+             const description = currentTab === 'perPerson'
+                 ? document.getElementById('perPersonDesc').value
+                 : document.getElementById('perGroupDesc').value;
+             
+             if (!amount || !description || selectedPayers.length === 0) {
+                toastr.error("Please fill in all fields and select payers", "Error");
+                 return;
+             }
+
+             document.getElementById('loader').style.display = 'block';
+
+             try {
+                 if (!expenseId && !isForEdit) {
+                     const expenseDesc = document.getElementById('expenseDescription').value;
+                     const expenseCategory = document.getElementById('expenseCategory').value;
+                     expenseId = await addExpenseAPI(expenseDesc, expenseCategory);
+                 }
+
+                 if (!participantsData && !isForEdit) {
+                     const participantsResult = await addParticipantsAPI(expenseId, people);
+                     participantsData = participantsResult.participants;
+                 }
+
+                 const participantsIds = participantsData.map(p => p.id);
+                 const paidByPersonId = participantsData.find(p => p.name === paidByPerson)?.id;
+
+                 const cost = {
+                     type: currentTab,
+                     amount: parseFloat(amount),
+                     description,
+                     payers: participantsIds,
+                     paidBy: paidByPersonId,
+                     isPaid: document.getElementById(currentTab === 'perPerson' ? 'perPersonPaidStatus' : 'perGroupPaidStatus').value === 'yes'
+                 };
+
+                 if (isForEdit && costId) {
+                     await handleEditCosts(costId, cost);
+                     return;
+                 }
+                 
+                 const subExpenseData = await addSubExpenseAPI(expenseId, cost);
+
+                 costs.push({
+                     ...cost,
+                     id: subExpenseData.id,
+                     expenseId: subExpenseData.expense.id,
+                     payers: subExpenseData.users_to_pay,
+                     paidBy: subExpenseData.paid_by
+                 });
+                 
+                 updateCostsList();
+                 toggleCostsPanel();
+                 updatePeopleList();
+                 updateParticipantsList();
+
+                 // Reset form
+                 document.getElementById(currentTab === 'perPerson' ? 'perPersonAmount' : 'perGroupAmount').value = '';
+                 document.getElementById(currentTab === 'perPerson' ? 'perPersonDesc' : 'perGroupDesc').value = '';
+                 document.getElementById(currentTab === 'perPerson' ? 'perPersonPayers' : 'perGroupPayers').innerHTML = '<span>Select Payers</span>';
+                 document.getElementById(currentTab === 'perPerson' ? 'perPersonPaidStatus' : 'perGroupPaidStatus').value = 'no';
+                 document.getElementById('payerName').textContent = "Not Paid";
+                 selectedPayers = [];
+                 paidByPerson = null;
+
+             } catch (error) {
+                toastr.error('Error: ' + error.message, "Error");
+             } finally {
+                 document.getElementById('loader').style.display = 'none';
+             }
+         }
+
+         async function handleEditCosts(costId){
+            //called when user clicks save on edit costs modal.
+            const updatedCost = {
+                type: currentTab,
+                amount: parseFloat(document.getElementById(`${currentTab}Amount`).value),
+                description: document.getElementById(`${currentTab}Desc`).value,
+                payers: selectedPayers,
+                paidBy: paidByPerson,
+                isPaid: document.getElementById(`${currentTab}PaidStatus`).value === 'yes'
+            };
+
+            const editedData = await editSubExpenseAPI(expenseId, costId, updatedCost);
+            
+            // Update costs array
+            const costIndex = costs.findIndex(c => c.id === parseInt(costId));
+            costs[costIndex] = {
+                ...updatedCost,
+                id: editedData.id,
+                expenseId: editedData.expense.id,
+                payers: editedData.users_to_pay,
+                paidBy: editedData.paid_by
+            };
+
+            updateCostsList();
+            toggleCostsPanel();
+            document.getElementById('addCostsPanel').setAttribute('data-is-edit', 'false');
+            document.getElementById('addCostsPanel').setAttribute('data-cost-id', '');
+         }
+
+         async function editCosts(costId) {
+             try {
+                 const cost = costs.find(c => c.id === costId);
+                 if (!cost) {
+                     throw new Error('Cost not found');
+                 }
+               
+                 // Populate edit form
+                 currentTab = cost.type;
+                 switchTab(cost.type);
+                 
+                 const costItem = document.querySelector(`.cost-item[data-cost-id="${cost.id}"]`);
+                 if (!costItem) {
+                     throw new Error('Cost item element not found');
+                 }
+
+                 document.getElementById(`${cost.type}Amount`).value = cost.amount;
+                 document.getElementById(`${cost.type}Desc`).value = cost.description;
+
+                 selectedPayers = cost.payers.map(p => p.name);
+                 const payersText = selectedPayers.join(', ');
+                 document.getElementById(`${cost.type}Payers`).innerHTML = `<span>${payersText}</span>`;
+
+                 document.getElementById(`${cost.type}PaidStatus`).value = cost.isPaid ? 'yes' : 'no';
+                 paidByPerson = cost.paidBy?.name;
+
+                 if (cost.isPaid) {
+                     document.getElementById('payerName').textContent = paidByPerson;
+                 }
+
+                 if(cost.type === 'perGroup'){
+                    document.getElementById(`${cost.type}Payers`).innerHTML = `
+                        <option value="${cost.payers.map(p => p.name).join(',')}" selected>
+                            ${payersText}
+                        </option>
+                    `;
+                 }
+                 costItem.innerHTML = `
+                     <p><strong>${cost.description}</strong></p>
+                     <p>Amount: ₹${cost.amount}</p>
+                     <p>Type: ${cost.type === 'perPerson' ? 'Per Person' : 'Group'}</p>
+                     <p>Payers: ${payersText}</p>
+                     <p>Status: ${cost.isPaid ? `Paid by ${paidByPerson}` : 'Not paid'}</p>
+                     <button onclick="editCosts(${cost.id})">Edit</button>
+                     <button onclick="deleteCosts(${cost.id})">Delete</button>
+                 `;
+
+                 // Disable the other tab based on cost type
+                 const perPersonTab = document.querySelector('.tab-btn[onclick="switchTab(\'perPerson\')"]');
+                 const perGroupTab = document.querySelector('.tab-btn[onclick="switchTab(\'perGroup\')"]');
+                 
+                 if (cost.type === 'perPerson') {
+                     perPersonTab.disabled = false;
+                     perGroupTab.disabled = true;
+                     perGroupTab.style.opacity = '0.5';
+                     perGroupTab.style.cursor = 'not-allowed';
+                     perPersonTab.style.opacity = '1';
+                     perPersonTab.style.cursor = 'pointer';
+                 } else {
+                     perPersonTab.disabled = true; 
+                     perGroupTab.disabled = false;
+                     perGroupTab.style.opacity = '1';
+                     perGroupTab.style.cursor = 'pointer';
+                     perPersonTab.style.opacity = '0.5';
+                     perPersonTab.style.cursor = 'not-allowed';
+                 }
+                 document.getElementById('addCostsPanel').setAttribute('data-is-edit', 'true');
+                 document.getElementById('addCostsPanel').setAttribute('data-cost-id', costId);
+                 toggleCostsPanel();
+                 
+             } catch (error) {
+                toastr.error('Error editing cost: ' + error.message);
+             }
+         }
+
+         async function deleteCosts(costId) {
+             try {
+                 if (!confirm('Are you sure you want to delete this cost?')) {
+                     return;
+                 }
+                 await deleteSubExpenseAPI(expenseId, costId);
+                 // Remove from costs array
+                 costs = costs.filter(cost => cost.id !== costId);
+                 updateCostsList();
+
+             } catch (error) {
+                toastr.error('Error deleting cost: ' + error.message, "Error");
+             }
+         }
+
+     </script>
+     
+     <script>
+         
+        function nextStep() {
+            const description = document.getElementById('expenseDescription').value;
+            const category = document.getElementById('expenseCategory').value;
+            
+            if (!description || !category) {
+                toastr.error('Please fill in all fields',"Error");
+                return;
+            }
+            
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+            document.querySelectorAll('.step-number')[1].classList.add('active');
+            
+            document.getElementById('expenseSummary').innerHTML = `
+                <strong>Expense:</strong> ${description}<br>
+                <strong>Category:</strong> ${category}
+            `;
+            updateParticipantsList();
+            showStep2();
+        }
+
+        function togglePeopleInput() {
+            document.getElementById('addPeoplePanel').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+
+        function checkAndShowCosts() {
+            if (people.length === 0) {
+                toastr.error('Please add participants first',"Error");
+                togglePeopleInput();
+                return;
+            }
+
+
+            const isForEdit = document.getElementById('addCostsPanel').setAttribute('data-is-edit','false');
+            const costId = document.getElementById('addCostsPanel').setAttribute('data-cost-id','');
+
+            // Enable both tabs
+            const perPersonTab = document.querySelector('.tab-btn[onclick="switchTab(\'perPerson\')"]');
+            const perGroupTab = document.querySelector('.tab-btn[onclick="switchTab(\'perGroup\')"]');
+            
+            perPersonTab.disabled = false;
+            perGroupTab.disabled = false;
+            perPersonTab.style.opacity = '1';
+            perGroupTab.style.opacity = '1'; 
+            perPersonTab.style.cursor = 'pointer';
+            perGroupTab.style.cursor = 'pointer';
+
+            //reset the fields
+            document.getElementById('perPersonAmount').value = '';
+            document.getElementById('perPersonDesc').value = '';
+            document.getElementById('perPersonPayers').innerHTML = '<span>Select Payers</span>';
+            document.getElementById('perPersonPaidStatus').value = 'no';
+            document.getElementById('payerName').textContent = 'Not Paid';
+            
+            document.getElementById('perGroupAmount').value = '';
+            document.getElementById('perGroupDesc').value = '';
+            document.getElementById('perGroupPayers').innerHTML = '<span>Select Payers</span>';
+            document.getElementById('perGroupPaidStatus').value = 'no';
+            toggleCostsPanel();
+        }
+
+        function toggleCostsPanel() {
+            document.getElementById('addCostsPanel').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+
+        function togglePayerSelection(){
+           document.getElementById('payerSelectionPanel').classList.remove('active');
+           document.getElementById('addCostsPanel').classList.add('active');
+        }
+
+        function togglePaidBySelection(){
+           document.getElementById('paidByPanel').classList.remove('active');
+           document.getElementById('addCostsPanel').classList.add('active');
+        }
+
+        async function addPerson() {
+            const personName = document.getElementById('personName').value;
+            if (!personName) return;
+            
+            if (!people.includes(personName)) {
+                people.push(personName);
+                
+                if (expenseId && participantsData) {
+                    try {
+                        const response = await fetch('/add_participants/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{csrf_token}}'
+                            },
+                            body: JSON.stringify({
+                                expense_id: expenseId,
+                                participants: [personName]
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (data.Status) {
+                            participantsData = data.Data.participants;   
+                            const hasCostItems = !!document.querySelector('#costsList .cost-item');
+                            if(hasCostItems){
+                                // to update the sub-expenses shown to user when he added new participant.
+                                let newSubExpensesData = data.Data.sub_expenses;
+                                if(newSubExpensesData){
+                                    costs = newSubExpensesData.map(subExpense => ({
+                                        amount: parseFloat(subExpense.amount),
+                                        description: subExpense.description,
+                                        expenseId: subExpense.expense.id,
+                                        id: subExpense.id,
+                                        isPaid: subExpense.paid_by !== null,
+                                        paidBy: subExpense.paid_by,
+                                        payers: subExpense.users_to_pay,
+                                        type: subExpense.split_type === 'P' ? 'perPerson' : 'perGroup'
+                                    }));
+                                    updateCostsList();
+                                }
+                            }
+                        } else {
+                            toastr.error('Error adding participant: ' + data.Error,"Error");
+                            people = people.filter(p => p !== personName);
+                            return;
+                        }
+                    } catch (error) {
+                        toastr.error('Error adding participant: ' + error.message,"Error");
+                        people = people.filter(p => p !== personName);
+                        return;
+                    }
+                }
+
+                updatePeopleList();
+                updateParticipantsList();
+                document.getElementById('personName').value = '';
+            }
+        }
+
+        async function removePerson(name, participantId) {
+            try {
+                if (participantId && expenseId) {
+                    const data = await deleteParticipantAPI(expenseId, participantId);
+                    costs = data.sub_expenses.map(subExpense => ({
+                        amount: parseFloat(subExpense.amount),
+                        description: subExpense.description,
+                        expenseId: subExpense.expense.id,
+                        id: subExpense.id,
+                        isPaid: subExpense.paid_by !== null,
+                        paidBy: subExpense.paid_by,
+                        payers: subExpense.users_to_pay,
+                        type: subExpense.split_type === 'P' ? 'perPerson' : 'perGroup'
+                    }));
+                    updateCostsList();
+                    participantsData = data.participants;
+                }
+                people = people.filter(person => person !== name);
+                updatePeopleList();
+                updateParticipantsList();
+                
+            } catch (error) {
+                toastr.error('Error removing participant: ' + error.message,"Error");
+            }
+        }
+
+        function updatePeopleList() {
+            const peopleList = document.getElementById('peopleList');
+            peopleList.innerHTML = '';
+            
+            people.forEach(person => {
+                const participantId = participantsData?.find(p => p.name === person)?.id;
+                const tag = document.createElement('span');
+                tag.className = 'person-tag';
+                tag.setAttribute('data-participant-id', participantId);
+                tag.innerHTML = `${person} <i class="fas fa-times" onclick="removePerson('${person}', ${participantId})"></i>`;
+                peopleList.appendChild(tag);
+            });
+        }
+
+        function updateParticipantsList() {
+            const participantsDisplay = document.getElementById('participantsDisplay');
+            participantsDisplay.innerHTML = '';
+            
+            people.forEach(person => {
+                const participantId = participantsData?.find(p => p.name === person)?.id;
+                const tag = document.createElement('span');
+                tag.className = 'person-tag';
+                tag.setAttribute('data-participant-id', participantId);
+                tag.innerHTML = `${person} <i class="fas fa-times" onclick="removePerson('${person}', ${participantId})"></i>`;
+                participantsDisplay.appendChild(tag);
+            });
+        }
+
+        function continueToCosts() {
+            togglePeopleInput();
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}Tab`).classList.add('active');
+        }
+
+        function showPayerSelection() {
+            selectedPayers = [];
+            const payersList = document.getElementById('payersList');
+            payersList.innerHTML = `
+                <label>
+                    <input type="checkbox" id="selectAllPayers" onchange="toggleAllPayers()"> Everyone
+                </label>
+            `;
+            
+            people.forEach(person => {
+                const participantId = participantsData?.find(p => p.name === person)?.id;
+                payersList.innerHTML += `
+                    <label>
+                        <input type="checkbox" value="${person}" data-participant-id="${participantId}" onchange="updateSelectedPayers()" ${selectedPayers.includes(person) ? 'checked' : ''}> ${person}
+                    </label>
+                `;
+            });
+            
+            document.getElementById('payerSelectionPanel').classList.add('active');
+            document.getElementById('addCostsPanel').classList.remove('active');
+        }
+
+        function toggleAllPayers() {
+            const allCheckbox = document.getElementById('selectAllPayers');
+            const checkboxes = document.querySelectorAll('#payersList input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                if (checkbox !== allCheckbox) {
+                    checkbox.checked = allCheckbox.checked;
+                }
+            });
+            updateSelectedPayers();
+        }
+
+        function updateSelectedPayers() {
+            selectedPayers = Array.from(document.querySelectorAll('#payersList input[type="checkbox"]:checked'))
+                .filter(checkbox => checkbox.id !== 'selectAllPayers')
+                .map(checkbox => checkbox.value);
+        }
+
+        function confirmPayers() {
+            const select = document.getElementById(currentTab === 'perPerson' ? 'perPersonPayers' : 'perGroupPayers');
+            select.value = selectedPayers.join(', ');
+            if (selectedPayers.length > 0) {
+                const displayText = selectedPayers.length > 2 
+                    ? `${selectedPayers[0]}, ${selectedPayers[1]} & ${selectedPayers.length - 2} more`
+                    : selectedPayers.join(', ');
+                
+                select.innerHTML = `
+                    <option value="${selectedPayers.join(',')}" selected>
+                        ${displayText}
+                    </option>
+                `;
+            } else {
+                select.innerHTML = '<option value="">Select Payers</option>';
+            }
+            document.getElementById('payerSelectionPanel').classList.remove('active');
+            document.getElementById('addCostsPanel').classList.add('active');
+        }
+
+        function showPaidBySelection() {
+            const status = document.getElementById(currentTab === 'perPerson' ? 'perPersonPaidStatus' : 'perGroupPaidStatus').value;
+            if (status === 'yes') {
+                const paidByList = document.getElementById('paidByList');
+                paidByList.innerHTML = '';
+                
+                people.forEach(person => {
+                    const participantId = participantsData?.find(p => p.name === person)?.id;
+                    paidByList.innerHTML += `
+                        <label>
+                            <input type="radio" name="paidBy" value="${person}" data-participant-id="${participantId}"> ${person}
+                        </label>
+                    `;
+                });
+                
+                document.getElementById('paidByPanel').classList.add('active');
+                document.getElementById('addCostsPanel').classList.remove('active');
+            }
+            else{
+                paidByPerson = null;
+            }
+        }
+
+        function confirmPaidBy() {
+            const selectedRadio = document.querySelector('input[name="paidBy"]:checked');
+            if (selectedRadio) {
+                paidByPerson = selectedRadio.value;
+            }
+            document.getElementById('payerName').textContent = paidByPerson;
+            document.getElementById('paidByPanel').classList.remove('active');
+            document.getElementById('addCostsPanel').classList.add('active');
+        }
+
+        function updateCostsList() {
+            const costsList = document.getElementById('costsList');
+            costsList.innerHTML = '';
+            
+            costs.forEach((cost) => {
+                const costDiv = document.createElement('div');
+                costDiv.className = 'cost-item';
+                costDiv.setAttribute('data-cost-id', cost.id);
+                costDiv.setAttribute('data-expense-id', cost.expenseId);
+                
+                costDiv.innerHTML = `
+                    <p><strong>${cost.description}</strong></p>
+                    <p>Amount: ₹${cost.amount}</p>
+                    <p>Type: ${cost.type === 'perPerson' ? 'Per Person' : 'Group'}</p>
+                    <p>Payers: ${cost.payers.map(payer => payer.name).join(', ')}</p>
+                    <p>Status: ${cost.isPaid ? `Paid by ${cost.paidBy.name}` : 'Not paid'}</p>
+                    <button onclick="editCosts(${cost.id})">Edit</button>
+                    <button onclick="deleteCosts(${cost.id})">Delete</button>
+                `;
+                costsList.appendChild(costDiv);
+            });
+        }
+        
+        function viewBill() {
+            if (costs.length === 0) {
+                toastr.error('No costs added yet',"Error");
+                return;
+            }
+            
+            const billDetails = document.getElementById('billDetails');
+            let totalAmount = 0;
+            let owes = {};
+            
+            people.forEach(person => {
+                owes[person] = {};
+                people.forEach(otherPerson => {
+                    if (person !== otherPerson) {
+                        owes[person][otherPerson] = 0;
+                    }
+                });
+            });
+            
+            costs.forEach(cost => {
+                totalAmount += cost.amount;
+                
+                if (cost.isPaid) {
+                    const amountPerPerson = cost.type === 'perPerson' 
+                        ? cost.amount 
+                        : cost.amount / cost.payers.length;
+                    
+                    cost.payers.forEach(payer => {
+                        if (payer.id !== cost.paidBy.id) {
+                            owes[payer.name][cost.paidBy.name] += amountPerPerson;
+                        }
+                    });
+                }
+            });
+            
+            let billHTML = `
+                <h3>Total Amount: ₹${totalAmount}</h3>
+                <div class="people-summary">
+                    ${people.map(person => {
+                        const participantId = participantsData?.find(p => p.name === person)?.id;
+                        return `
+                            <div class="person-card" onclick="togglePersonDetails('${person}')" data-participant-id="${participantId}">
+                                <h4>${person}</h4>
+                                <div id="details-${person}" class="person-details" style="display:none;">
+                                    ${Object.keys(owes[person]).map(otherPerson => {
+                                        if (owes[person][otherPerson] > 0) {
+                                            return `<div class="owe-detail">
+                                                <span class="arrow red">→</span>
+                                                Owes ₹${owes[person][otherPerson]} to ${otherPerson}
+                                            </div>`;
+                                        } else if (owes[otherPerson][person] > 0) {
+                                            return `<div class="owe-detail">
+                                                <span class="arrow green">←</span>
+                                                Gets ₹${owes[otherPerson][person]} from ${otherPerson}
+                                            </div>`;
+                                        }
+                                        return '';
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <span class="arrow green">←</span> You will receive money
+                    </div>
+                    <div class="legend-item">
+                        <span class="arrow red">→</span> You owe money
+                    </div>
+                </div>
+            `;
+            
+            billDetails.innerHTML = billHTML;
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                .people-summary {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                    gap: 20px;
+                    margin: 20px 0;
+                }
+                .person-card {
+                    background: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+                .person-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+                .person-details {
+                    margin-top: 10px;
+                    font-size: 0.9em;
+                }
+                .owe-detail {
+                    margin: 5px 0;
+                    padding: 5px;
+                    background: white;
+                    border-radius: 4px;
+                }
+                .arrow {
+                    display: inline-block;
+                    margin-right: 5px;
+                    font-weight: bold;
+                }
+                .arrow.green {
+                    color: #28a745;
+                }
+                .arrow.red {
+                    color: #dc3545;
+                }
+                .legend {
+                    margin-top: 20px;
+                    padding: 10px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                }
+                .legend-item {
+                    margin: 5px 0;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.getElementById('billViewPanel').classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+        }
+
+        function togglePersonDetails(person) {
+            const details = document.getElementById(`details-${person}`);
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+        }
+        function toggleBillView() {
+            document.getElementById('billViewPanel').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+     </script>
+ </body>
+ </html>
+ 

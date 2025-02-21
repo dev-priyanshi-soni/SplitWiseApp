@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f5f6fa;
+        }
+
+        .navbar {
+            background: #0083b0;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .navbar h1 {
+            color: white;
+            font-size: 24px;
+        }
+
+        .nav-items {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-items a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            transition: 0.3s;
+        }
+
+        .nav-items a:hover {
+            color: #e0e0e0;
+        }
+
+        .notification-badge {
+            position: relative;
+        }
+
+        .badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .main-content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 30% 67%;
+            gap: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #2d3436;
+            margin-bottom: 20px;
+        }
+
+        .expense-form {
+            display: grid;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #0083b0;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #006d94;
+        }
+
+        .expense-list {
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+        }
+
+        .expense-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .expense-item:last-child {
+            border-bottom: none;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+        .expense-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor:pointer;
+        }
+        
+        .expense-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .expense-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .expense-date {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .expense-category {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #e8f5e9;
+            color: #388e3c;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .participants-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .participant-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .participant-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #34495e;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            display: none;
+        }
+        
+        .participant-avatar:hover .participant-tooltip {
+            display: block;
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .loading-spinner::after {
+            content: "";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>Splitwise Dashboard</h1>
+        <div class="nav-items">
+            <a href="{% url 'add_expense_view'%}" title="Add Expense"><i class="fas fa-plus-circle"></i></a>
+            <a href="#" title="Profile"><i class="fas fa-user"></i></a>
+            <div class="notification-badge">
+                <a href="#" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    {% if notification_count > 0 %}
+                        <span class="badge">{{ notification_count }}</span>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </nav>
+    {% if welcome_message %}
+    <div class="alert alert-success" id="welcome-alert">
+        {{ welcome_message }}
+    </div>
+    <script>
+        setTimeout(function() {
+            document.getElementById('welcome-alert').style.display = 'none';
+        }, 3000);
+    </script>
+    {% endif %}
+
+    {% if error_message %}
+    <div class="alert alert-danger" id="error-alert">
+        {{ error_message }}
+    </div>
+    <script>
+        setTimeout(function() {
+            document.getElementById('error-alert').style.display = 'none';
+        }, 3000);
+    </script>
+    {% endif %}
+    <div class="main-content">
+        <div class="left-section card">
+            <div>
+                <h2>Recent Expenses</h2>
+                <div class="expense-list" id="expensesData">
+                   
+                </div>
+            </div>
+        </div>
+
+        <div class="right-section">
+            <div class="card">
+                <h2>Monthly Expense Breakdown</h2>
+                <div class="chart-container">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Track Sheet</h2>
+                <div class="expense-list" id="expenseLineGraphData">
+                   
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        let expenseLineChart;
+        
+        async function loadMonthlyExpenses() {
+            try {
+                const response = await fetch('/get-monthly-expense-count/');
+                const data = await response.json();
+                
+                if (data.Status) {
+                    const monthNames = [
+                        'January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'
+                    ];
+                    
+                    const ctx = document.createElement('canvas');
+                    document.getElementById('expenseLineGraphData').innerHTML = '';
+                    document.getElementById('expenseLineGraphData').appendChild(ctx);
+                    
+                    if (expenseLineChart) {
+                        expenseLineChart.destroy();
+                    }
+                    
+                    expenseLineChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.data.months.map(month => monthNames[month-1]),
+                            datasets: [{
+                                label: 'Monthly Expenses',
+                                data: data.data.amounts,
+                                borderColor: '#36A2EB',
+                                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '₹' + value.toLocaleString();
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return '₹' + context.parsed.y.toLocaleString();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    console.error('Error loading monthly expenses:', data.Error);
+                    document.getElementById('expenseLineGraphData').innerHTML = 
+                        '<div class="error-message">Failed to load monthly expenses</div>';
+                }
+            } catch (error) {
+                console.error('Error fetching monthly expenses:', error);
+                document.getElementById('expenseLineGraphData').innerHTML = 
+                    '<div class="error-message">Failed to load monthly expenses</div>';
+            }
+        }
+
+        loadMonthlyExpenses();
+    </script>
+
+
+    <script>
+        let expenseChart;
+        async function loadExpenseCategories() {
+            try {
+                const response = await fetch('/get-expense-categories/');
+                const data = await response.json();
+                
+                if (data.Status) {
+                    const ctx = document.getElementById('expenseChart').getContext('2d');
+                    
+                    if (expenseChart) {
+                        expenseChart.destroy();
+                    }
+                    
+                    expenseChart = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: data.data.categories,
+                            datasets: [{
+                                data: data.data.amounts,
+                                backgroundColor: [
+                                    '#FF6384',
+                                    '#36A2EB', 
+                                    '#FFCE56',
+                                    '#4BC0C0',
+                                    '#9966FF'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                } else {
+                    console.error('Error loading expense categories:', data.Error);
+                }
+            } catch (error) {
+                console.error('Error fetching expense categories:', error);
+            }
+        }
+
+        loadExpenseCategories();
+    </script> 
+
+
+
+
+
+<script>
+    let currentPage = 1;
+    let hasNextPage = false;
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    function getInitials(name) {
+        return name.split(' ').map(word => word[0]).join('').toUpperCase();
+    }
+
+    function renderExpense(expense) {
+        return `
+            <div class="expense-card" id="${expense.id}" onclick="window.location.href='/get-expense-details/${expense.id}/'">
+                <div class="expense-header">
+                    <h3 class="expense-title">${expense.description}</h3>
+                    <span class="expense-date">${formatDate(expense.created_at)}</span>
+                </div>
+                <span class="expense-category">${expense.category}</span>
+                <div class="participants-list">
+                    ${expense.participants.map(participant => `
+                        <div class="participant-avatar" style="background: ${getRandomColor()}">
+                            ${getInitials(participant.name)}
+                            <span class="participant-tooltip">${participant.name}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function getRandomColor() {
+        const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    async function loadExpenses(page = 1) {
+       
+
+        try {
+            const response = await fetch(`/get-expenses/?page=${page}&limit=10`);
+            const data = await response.json();
+
+            if (data.Status) {
+                const expensesContainer = document.getElementById('expensesData');
+                
+                if (page === 1) {
+                    expensesContainer.innerHTML = '';
+                }
+
+                data.data.expenses.forEach(expense => {
+                    expensesContainer.innerHTML += renderExpense(expense);
+                });
+
+                hasNextPage = data.data.pagination.has_next;
+                currentPage = data.data.pagination.current_page;
+            }
+        } catch (error) {
+            console.error('Error loading expenses:', error);
+        } finally {
+            
+        }
+    }
+
+    loadExpenses();
+
+    document.getElementById('expensesData').addEventListener('scroll', (e) => {
+        const container = e.target;
+        if (container.scrollHeight - container.scrollTop <= container.clientHeight + 100) {
+            if (hasNextPage) {
+                loadExpenses(currentPage + 1);
+            }
+        }
+    });
+</script>
+
+
+</body>
+</html>
+

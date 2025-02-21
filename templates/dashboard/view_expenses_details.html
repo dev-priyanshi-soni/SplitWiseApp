@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expense Details</title>
+    <style>
+        #graph-container {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ddd;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            background: #008CBA;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background: #006d94;
+        }
+        .expense-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .expense-title {
+            font-size: 24px;
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .expense-meta {
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+
+        .sub-expense-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            width: calc(33.33% - 20px); /* One third width minus margin */
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 20px;
+            box-sizing: border-box;
+            cursor:pointer;
+        }
+
+        .sub-expense-card:nth-child(3n) {
+            margin-right: 0;
+        }
+
+        .action-buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .btn {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .btn-edit {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-bill {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .participant-circle .participant-name{
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .participant-circle:hover {
+            transform: scale(1.1);
+            
+        }
+        
+
+        .participant-tooltip {
+            position: absolute;
+            background: #34495e;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .participant-circle:hover .participant-tooltip {
+            display: block;
+            opacity: 1;
+        }
+        .participants {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .balance-details {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            width: max-content;
+            z-index: 1000;
+            display: none;
+            position: relative;
+            left: 0px;
+        }
+
+        .balance-row {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .arrow {
+            margin: 0 10px;
+            font-size: 20px;
+        }
+
+        .amount {
+            font-weight: bold;
+        }
+
+        .debt {
+            color: #e74c3c;
+        }
+
+        .lend {
+            color: #2ecc71;
+        }
+
+        .participants-list {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .participants-list h3 {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .text-black{
+            color:#000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display:flex;align-items: center; margin-bottom:10px;">
+            <button onclick="window.location.href='/home/'" class="btn btn-primary mt-3">Back</button>
+            <div class="debtSettlementsWrapper">
+                <button id="viewSettlementsBtn" onclick="toggleSettlements()" class="btn btn-primary mt-3">
+                    View Debt Settlements
+                </button>
+            </div>
+
+            <div class="debtGraphWrapper">
+            
+                <button id="viewGraphBtn" onclick="toggleGraph()" class="btn btn-primary">
+                    View Lending & Borrowing Graph
+                </button>
+                
+            </div>
+        </div>
+        <div id="debtSettlements" class="container mt-4" style="display: none;">
+            <h3>Minimum Required Transactions for Settlement</h3>
+            <div id="transactionsList" class="transactions-list">
+                <!-- Transactions will be populated here -->
+            </div>
+            <div id="settlement-graph-container"></div>
+        </div>
+        <div id="graph-container" style="display:none;"></div> 
+        <div id="expenseDetails"></div>
+        
+    </div>
+
+    <script>
+        let settlementsVisible = false;
+
+        async function fetchDebtSettlements() {
+            try {
+                const expenseId = window.location.href.match(/\/get-expense-details\/(\d+)\//)[1];
+                const response = await fetch(`/get-debt-settlement/${expenseId}/`);
+                const data = await response.json();
+
+                if (data.Status) {
+                    //updateGraphWithSettlements(data.Data);
+                    displayTransactions(data.Data);
+                } else {
+                    console.error('Error fetching settlements:', data.Error);
+                }
+            } catch (error) {
+                console.error('Error fetching settlements:', error);
+            }
+        }
+
+        // async function updateGraphWithSettlements(settlementData) {
+        //     try {
+        //         const expenseId = window.location.href.match(/\/get-expense-details\/(\d+)\//)[1];
+
+        //         if (!settlementData || !graphData.nodes || !graphData.edges) {
+        //             console.error('Invalid data received');
+        //             return;
+        //         }
+
+        //         // Create a map of name to node id
+        //         const nameToId = {};
+        //         graphData.nodes.forEach(node => {
+        //             const name = node.label.split('\n')[0].toLowerCase();
+        //             nameToId[name] = node.id;
+        //         });
+
+        //         // Add settlement edges
+        //         const settlementEdges = settlementData.map(settlement => ({
+        //             from: nameToId[settlement.from.toLowerCase()],
+        //             to: nameToId[settlement.to.toLowerCase()],
+        //             label: `₹${settlement.amount}`,
+        //             arrows: 'to',
+        //             color: {
+        //                 color: '#FF69B4' // Pink for giving money
+        //             },
+        //             dashes: true,
+        //             width: 3
+        //         }));
+
+        //         // Create reverse edges for receiving money
+        //         const receiveEdges = settlementData.map(settlement => ({
+        //             from: nameToId[settlement.to.toLowerCase()],
+        //             to: nameToId[settlement.from.toLowerCase()],
+        //             label: `₹${settlement.amount}`,
+        //             arrows: 'to',
+        //             color: {
+        //                 color: '#00BFFF' // Blue for receiving money
+        //             },
+        //             dashes: true,
+        //             width: 3
+        //         }));
+
+        //         // Combine all edges
+        //         const allEdges = [...graphData.edges, ...settlementEdges, ...receiveEdges];
+
+        //         // Create new network with updated edges
+        //         const container = document.getElementById('settlement-graph-container');
+        //         const data = {
+        //             nodes: graphData.nodes,
+        //             edges: allEdges
+        //         };
+
+        //         const options = {
+        //             physics: {
+        //                 enabled: true,
+        //                 barnesHut: {
+        //                     gravitationalConstant: -2000,
+        //                     centralGravity: 0.3,
+        //                     springLength: 200,
+        //                     springConstant: 0.04,
+        //                     damping: 0.09,
+        //                     avoidOverlap: 1
+        //                 },
+        //                 repulsion: {
+        //                     nodeDistance: 300
+        //                 },
+        //                 stabilization: {
+        //                     iterations: 2000
+        //                 }
+        //             },
+        //             interaction: {
+        //                 hover: true,
+        //                 navigationButtons: true,
+        //                 zoomView: true
+        //             },
+        //             layout: {
+        //                 randomSeed: 2,
+        //                 improvedLayout: true,
+        //                 hierarchical: {
+        //                     enabled: false,
+        //                     nodeSpacing: 400
+        //                 }
+        //             }
+        //         };
+
+        //         const network = new vis.Network(container, data, options);
+
+        //         network.on("stabilizationIterationsDone", function () {
+        //             network.setOptions({ physics: { enabled: false } });
+        //         });
+
+        //         // Create settlement-only graph
+        //         const settlementContainer = document.createElement('div');
+        //         settlementContainer.className = 'settlement-graph';
+        //         settlementContainer.style.height = '400px';
+        //         settlementContainer.style.marginTop = '20px';
+        //         document.getElementById('debtSettlements').appendChild(settlementContainer);
+
+        //         const ResultantData = {
+        //             nodes: graphData.nodes,
+        //             edges: [...settlementEdges.map(edge => ({
+        //                 ...edge,
+        //                 color: { color: '#FF69B4' }
+        //             })), ...receiveEdges.map(edge => ({
+        //                 ...edge,
+        //                 color: { color: '#8A2BE2' } // Violet for receiving edges
+        //             }))]
+        //         };
+
+        //         const settlementNetwork = new vis.Network(settlementContainer, ResultantData, {
+        //             ...options,
+        //             physics: {
+        //                 ...options.physics,
+        //                 stabilization: {
+        //                     iterations: 1000
+        //                 }
+        //             }
+        //         });
+
+        //         settlementNetwork.on("stabilizationIterationsDone", function () {
+        //             settlementNetwork.setOptions({ physics: { enabled: false } });
+        //         });
+
+        //     } catch (error) {
+        //         console.error('Error updating graph with settlements:', error);
+        //     }
+        // }
+
+        function displayTransactions(transactions) {
+            const transactionsList = document.getElementById('transactionsList');
+            transactionsList.innerHTML = '';
+
+            if (transactions.length === 0) {
+                transactionsList.innerHTML = '<p>No settlements needed - all balances are cleared!</p>';
+                return;
+            }
+
+            transactions.forEach(transaction => {
+                const transactionDiv = document.createElement('div');
+                transactionDiv.className = 'transaction-item';
+                transactionDiv.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-center p-3 border rounded mb-2">
+                        <span class="debt">${transaction.from}</span>
+                        <span class="arrow">→</span>
+                        <span class="amount">₹${transaction.amount}</span>
+                        <span class="arrow">→</span>
+                        <span class="lend">${transaction.to}</span>
+                    </div>
+                `;
+                transactionsList.appendChild(transactionDiv);
+            });
+        }
+
+        function toggleSettlements() {
+            const settlementsDiv = document.getElementById('debtSettlements');
+            settlementsVisible = !settlementsVisible;
+            
+            if (settlementsVisible) {
+                settlementsDiv.style.display = 'block';
+                fetchDebtSettlements();
+                document.getElementById('viewSettlementsBtn').textContent = 'Hide Debt Settlements';
+            } else {
+                settlementsDiv.style.display = 'none';
+                document.getElementById('viewSettlementsBtn').textContent = 'View Debt Settlements';
+            }
+        }
+    </script>
+
+  
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
+    
+    <script>
+        let graphData = { nodes: [], edges: [] };
+
+        async function fetchGraphData() {
+            try {
+                const expenseId = window.location.href.match(/\/get-expense-details\/(\d+)\//)[1];
+                const response = await fetch(`/get-expense-graph-data/${expenseId}/`);
+                const data = await response.json();
+
+                if (data.Status) {
+                    graphData = data.Data;
+                } else {
+                    console.error('Error fetching graph data:', data.Error);
+                }
+            } catch (error) {
+                console.error('Error fetching graph data:', error);
+            }
+        }
+
+        function createGraph() {
+            const container = document.getElementById('graph-container');
+
+            const nodes = new vis.DataSet(graphData.nodes.map(node => ({
+                id: node.id,
+                label: node.label,
+                color: node.color,
+                font: {
+                    size: 16,
+                    face: 'arial',
+                    color: '#2c3e50',
+                    bold: true
+                },
+                shape: 'circle',
+                size: 30,
+                borderWidth: 2,
+                shadow: true
+            })));
+
+            const edges = new vis.DataSet(graphData.edges.map(edge => ({
+                from: edge.from,
+                to: edge.to,
+                label: edge.label,
+                arrows: {
+                    to: {
+                        enabled: true,
+                        scaleFactor: 1
+                    }
+                },
+                color: edge.color.color,
+                width: 2,
+                font: {
+                    size: 14,
+                    face: 'arial',
+                    color: '#34495e',
+                    strokeWidth: 2,
+                    strokeColor: '#ffffff',
+                    background: '#ffffff',
+                    align: 'horizontal'
+                },
+                smooth: {
+                    type: 'curvedCW',
+                    roundness: 0.4
+                }
+            })));
+
+            const data = { nodes, edges };
+
+            const options = {
+                nodes: {
+                    margin: 40
+                },
+                edges: {
+                    length: 400,
+                    font: {
+                        background: '#ffffff',
+                        strokeWidth: 3, // Add white border around text
+                        strokeColor: '#ffffff', // Border color
+                        align: 'horizontal'
+                    },
+                    smooth: {
+                        type: 'curvedCW',
+                        roundness: 0.4
+                    },
+                    selectionWidth: 2
+                },
+                physics: {
+                    enabled: true,
+                    barnesHut: {
+                        gravitationalConstant: -20000,
+                        springLength: 400,
+                        springConstant: 0.02,
+                        damping: 0.09,
+                        avoidOverlap: 1
+                    },
+                    repulsion: {
+                        nodeDistance: 300
+                    },
+                    stabilization: {
+                        iterations: 2000
+                    }
+                },
+                interaction: {
+                    hover: true,
+                    navigationButtons: true,
+                    zoomView: true
+                },
+                layout: {
+                    randomSeed: 2,
+                    improvedLayout: true,
+                    hierarchical: {
+                        enabled: false,
+                        nodeSpacing: 400
+                    }
+                }
+            };
+
+            const network = new vis.Network(container, data, options);
+            
+            // Force nodes to spread out after initial layout
+            network.on("stabilizationIterationsDone", function () {
+                network.setOptions({ physics: { enabled: false } });
+            });
+
+            // Add event listener to adjust edge labels after physics stabilization
+            network.on("afterDrawing", function () {
+                const edgePositions = network.getPositions();
+                const ctx = network.canvas.getContext();
+                
+                edges.forEach(edge => {
+                    const fromPos = edgePositions[edge.from];
+                    const toPos = edgePositions[edge.to];
+                    if (fromPos && toPos) {
+                        // Calculate middle point of edge
+                        const midX = (fromPos.x + toPos.x) / 2;
+                        const midY = (fromPos.y + toPos.y) / 2;
+                        
+                        // Offset label position slightly above the edge
+                        edge.font = {
+                            ...edge.font,
+                            yOffset: -10
+                        };
+                    }
+                });
+            });
+        }
+
+        function toggleGraph() {
+            const graphContainer = document.getElementById('graph-container');
+            const button = document.getElementById('viewGraphBtn');
+
+            if (graphContainer.style.display === 'none') {
+                graphContainer.style.display = 'block';
+                fetchGraphData().then(createGraph);
+                button.textContent = 'Hide Graph';
+            } else {
+                graphContainer.style.display = 'none';
+                button.textContent = 'View Lending & Borrowing Graph';
+            }
+        }
+    </script>
+
+    <script>
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            //to hide balance-details ele when hover happens
+            document.addEventListener('mouseenter', function (event) {
+                if (!(event.target instanceof Element)) return;
+                let participant = event.target.closest('.participant-circle'); 
+                if (participant) {
+                    let balanceDetails = participant.querySelector('.balance-details');
+                    if (balanceDetails) {
+                        balanceDetails.style.display = 'none';
+                    }
+                }
+            }, true);
+        
+            document.addEventListener('mouseleave', function (event) {
+                if (!(event.target instanceof Element)) return;
+                let participant = event.target.closest('.participant-circle'); 
+                if (participant) {
+                    let balanceDetails = participant.querySelector('.balance-details');
+                    if (balanceDetails) {
+                        balanceDetails.style.display = ''; 
+                    }
+                }
+            }, true);
+        });
+        
+        
+        function getInitials(name) {
+            return name.split(' ').map(word => word[0]).join('').toUpperCase();
+        }
+
+        function getRandomColor() {
+            const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        async function loadExpenseDetails() {
+            const expenseId = window.location.href.match(/\/get-expense-details\/(\d+)\//)[1];
+            
+            try {
+                const response = await fetch(`/get-sub-expenses/${expenseId}/`);
+                const data = await response.json();
+
+                if (data.Status) {
+                    const expense = data.Data;
+                    const container = document.getElementById('expenseDetails');
+
+                    let html = `
+                        <div class="expense-header">
+                            <h1 class="expense-title">${expense.description}</h1>
+                            <div class="expense-meta">
+                                <div>Category: ${expense.category}</div>
+                                <div>Created on: ${formatDate(expense.created_at)}</div>
+                                <div>Created by: ${expense.created_by.full_name}</div>
+                                <button class="btn" onclick="window.location.href='/edit-expense/${expenseId}/'">Edit/View</button>
+                            </div>
+                            <div class="participants-list">
+                                <h3>Participants:</h3>
+                                ${expense.participants.map(p => `
+                                    <div class="participant-circle" onclick="event.stopPropagation();showBalanceDetails(${expenseId}, '${p.name}')">
+                                        <span class="participant-name" style="background: ${getRandomColor()}">${getInitials(p.name)}</span>
+                                        <span class="participant-tooltip">${p.name}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="balance-details"></div>
+                        </div>
+                    `;
+                    expense.sub_expenses.forEach(subExpense => {
+                        html += `
+                            <div class="sub-expense-card" onclick="window.location.href='/edit-expense/${expenseId}/'">
+                                <h3>${subExpense.description}</h3>
+                                <p>Amount: ₹${subExpense.amount}</p>
+                                <p>Paid by: ${subExpense.paid_by_name}</p>
+                                <p>Split type: ${subExpense.split_type ? subExpense.split_type === 'P' ? 'per Person' : 'per Group' : 'N/A'}</p>
+                                <div class="participants">
+                                    ${subExpense.users_to_pay.map(user => ` 
+                                        <div class="participant-circle" 
+                                             onclick="event.stopPropagation();showBalanceDetails(${expenseId}, '${user.name}')">
+                                            <span style="background: ${getRandomColor()}" class="participant-name" >${getInitials(user.name)}</span>
+                                            <span class="participant-tooltip">${user.name}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    container.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading expense details:', error);
+            }
+        }
+        
+
+
+        async function showBalanceDetails(expenseId, participantName) {
+            try {
+                let element = document.querySelector('.expense-header');
+                const response = await fetch(`/get-user-balance/${expenseId}/${participantName}/`);
+                const data = await response.json();
+
+                if (data.Status) {
+                    document.querySelectorAll('.balance-details').forEach(detail => {
+                        detail.style.display = 'none';
+                    });
+                
+                    const balanceDetails = element.querySelector('.balance-details');
+                    if (balanceDetails) {
+                        balanceDetails.style.display = 'block';
+                        let html = '';
+                        if (data.Data.to_give.length > 0) {
+                            data.Data.to_give.forEach(item => {
+                                html += `
+                                    <div class="balance-row">
+                                        <spanm class="text-black">You owe ${item.name}</span>
+                                        <span class="arrow debt">→</span>
+                                        <span class="amount debt">₹${item.amount}</span>
+                                    </div>
+                                `;
+                            });
+                        }
+                        
+                        if (data.Data.to_receive.length > 0) {
+                            data.Data.to_receive.forEach(item => {
+                                html += `
+                                    <div class="balance-row">
+                                        <span class="text-black">${item.name} owes you</span>
+                                        <span class="arrow lend">→</span>
+                                        <span class="amount lend">₹${item.amount}</span>
+                                    </div>
+                                `;
+                            });
+                        }
+                        
+                        if (!data.Data.to_give.length && !data.Data.to_receive.length) {
+                            html = `
+                                <div class="balance-row">
+                                    <span>All settled up!</span>
+                                </div>
+                            `;
+                        }
+                        
+                        balanceDetails.innerHTML = html;
+                    }                    
+                    
+                }
+            } catch (error) {
+                console.error('Error loading balance details:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadExpenseDetails);
+    </script>
+</body>
+</html>

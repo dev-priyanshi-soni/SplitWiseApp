@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #00b4db, #0083b0);
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .messages {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .messages li {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .messages .error {
+            background: #ffe6e6;
+            color: #d63031;
+        }
+
+        .messages .success {
+            background: #e6ffe6;
+            color: #00b894;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #0083b0;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #0083b0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #006d94;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .signup-link a {
+            color: #0083b0;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome Back!</h2>
+
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" name="username" id="username" required placeholder="Enter your username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" required placeholder="Enter your password">
+            </div>
+            <button type="submit">Sign In</button>
+        </form>
+
+        <div class="signup-link">
+            <p>Don't have an account? <a href="{% url 'signup' %}">Sign up here</a></p>
+        </div>
+    </div>
+</body>
+</html>
